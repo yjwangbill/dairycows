@@ -1,0 +1,37 @@
+function [kernelFunc, KernelOpts, bandwidths, scales] = kernelSetup(X, Y, KernelOpts)
+% X, Y: covariates and labels. As is, the Y's aren't really used but passing
+%       them here in case we need to design kernels (later on) using Y.
+% KernelOpts: A struct which contains info on how to construct the
+%   KernelOpts. Read obtainDecomposition.
+% Here we use the newton-girard trick and elementary symmetric
+% polynomials to compute all k^th order interactiosn for k = 1:D
+
+  % Prelims
+  [n p] = size(X);
+  
+  if ~isfield(KernelOpts, 'bws') || isempty(KernelOpts.bws)
+      bws = 20*std2(X) * n^(-1/5);
+  else
+      bws = KernelOpts.bws;
+  end
+  
+  if ~isfield(KernelOpts, 'order') || isempty(KernelOpts.order)
+      order = 2;
+  else
+      order = KernelOpts.order;
+  end
+  
+  if ~isfield(KernelOpts, 'group')
+      options.Kernel =  'rbf' ;  
+      options.KernelParam=bws ;   
+      kernelFunc = @(X1, X2) espKernels(X1, X2, bws);
+  
+  else
+      options.Kernel =  'rbf' ;  
+      options.KernelParam=1 ; 
+      group = KernelOpts.group;
+       kernelFunc = @(X1, X2) calckernel(options, X1, X2);
+    %  kernelFunc = @(X1, X2) espKernels_group(X1, X2, bws, group);
+  end
+
+end
